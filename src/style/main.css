@@ -1,0 +1,55 @@
+@media all and (min-width: 480px) {
+    .CenterMain {
+        background-color: darkcyan;
+        height: 500px;
+        width: 100%;
+    }
+
+    .navbar {
+        margin-bottom: 0px;
+    }
+
+    .CenterMain .MainText {
+        width: 100%;
+        display: inline-block;
+        text-align: center;
+        margin: 200px 0px 0px 0px;
+        font-size: 40px;
+    }
+
+    .CenterMain .SubText {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        font-size: 20px;
+    }
+
+    .CategoryHeading {
+        margin-left: 10px;
+        font-size: 30px;
+        display: block;
+    }
+
+    .CarouselImage {
+        height: 100%;
+        width: 100%;
+    }
+
+    .thumbnail {
+        margin-left: 5px;
+    }
+
+    .thumbnail>img {
+        height: 100px;
+    }
+
+    .thumbnail h3 {
+        white-space: nowrap;
+        overflow: scroll;
+        font-size: 20px;
+    }
+
+    .AllDetail {
+        margin-left: 10px;
+    }
+}
