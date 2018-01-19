@@ -34,6 +34,14 @@ const USER_END = '/user/getOne?uid=';
 import '../style/main.css';
 const UID = localStorage.getItem('uid');
 
+// <p>
+//     {alreadyInCart ?
+//         <Button onClick={this.removeFromCart} value={indiProduct.productId} bsStyle='primary'>Remove from Cart</Button>
+//         :
+//         <Button onClick={this.addToCart} value={indiProduct.productId} bsStyle='primary'>Add to Cart</Button>
+//     }
+// </p>
+
 class App extends Component {
 
     state = {
@@ -50,6 +58,9 @@ class App extends Component {
         search: '',
         itemsInCart: 0,
         alreadyInCart: false,
+        cartLimitExceed: false,
+        orderPlaced: false,
+        loginFirst: false,
         items: [
             {
                 productId: '',
@@ -86,6 +97,13 @@ class App extends Component {
                 userId: '',
                 productId: '',
                 purchaseUnit: 0
+            }
+        ],
+        placeOrder: [
+            {
+                productId: '',
+                units: 0,
+                price: 0
             }
         ]
     }
@@ -155,32 +173,36 @@ class App extends Component {
         console.log(pid)
         let finalpid = pid
 
-        let uid = UID.replace(/\"/g, "");
-        axios({
-            method: 'get',
-            url: 'http://10.177.7.121:8080/cart/getByUid/' + uid
-        })
-            .then(function (response) {
-                console.log(response)
-                let data = response.data.productDTOList
-                let tempcarts = this.state.carts.slice();
-                tempcarts.splice(0, 100)
-                for (var i=0; i<data.length; i++) {
-                    tempcarts.push({
-                        pBrand: data[i].pBrand,
-                        pCategory: data[i].pCategory,
-                        pName: data[i].pName,
-                        pPrice: data[i].pPrice,
-                        pUnit: data[i].pUnit,
-                        pimage: data[i].pimage,
-                        productId: data[i].productId
-                    })
-                }
-                this.setState({carts: tempcarts})
-            }.bind(this))
-            .catch(function (error) {
-                console.log(error)
+
+        if (UID != null) {
+            let uid = UID.replace(/\"/g, "");
+            axios({
+                method: 'get',
+                url: 'http://10.177.7.121:8080/cart/getByUid/' + uid
             })
+                .then(function (response) {
+                    console.log(response)
+                    let data = response.data.productDTOList
+                    let tempcarts = this.state.carts.slice();
+                    tempcarts.splice(0, 100)
+                    for (var i=0; i<data.length; i++) {
+                        tempcarts.push({
+                            pBrand: data[i].pBrand,
+                            pCategory: data[i].pCategory,
+                            pName: data[i].pName,
+                            pPrice: data[i].pPrice,
+                            pUnit: data[i].pUnit,
+                            pimage: data[i].pimage,
+                            productId: data[i].productId
+                        })
+                    }
+                    this.setState({carts: tempcarts})
+                }.bind(this))
+                .catch(function (error) {
+                    console.log(error)
+                })
+        }
+
 
         if (pid == '') {
             let lpid = event.target.parentNode.id
@@ -280,86 +302,179 @@ class App extends Component {
     openCart = (event) => {
         this.setState({showCartMod: true})
 
-        let uid = UID.replace(/\"/g, "");
-        axios({
-            method: 'get',
-            url: 'http://10.177.7.121:8080/cart/getByUid/' + uid
-        })
-            .then(function (response) {
-                console.log(response)
-                let data = response.data.productDTOList
-                let tempcarts = this.state.carts.slice();
-                tempcarts.splice(0, 100)
-                for (var i=0; i<data.length; i++) {
-                    tempcarts.push({
-                        pBrand: data[i].pBrand,
-                        pCategory: data[i].pCategory,
-                        pName: data[i].pName,
-                        pPrice: data[i].pPrice,
-                        pUnit: data[i].pUnit,
-                        pimage: data[i].pimage,
-                        productId: data[i].productId
-                    })
-                }
-                this.setState({carts: tempcarts})
-            }.bind(this))
-            .catch(function (error) {
-                console.log(error)
+        console.log(UID)
+        if (UID != null) {
+            let uid = UID.replace(/\"/g, "");
+            axios({
+                method: 'get',
+                url: 'http://10.177.7.121:8080/cart/getByUid/' + uid
             })
+                .then(function (response) {
+                    console.log(response)
+                    let data = response.data.productDTOList
+                    let tempcarts = this.state.carts.slice();
+                    tempcarts.splice(0, 100)
+                    for (var i=0; i<data.length; i++) {
+                        tempcarts.push({
+                            pBrand: data[i].pBrand,
+                            pCategory: data[i].pCategory,
+                            pName: data[i].pName,
+                            pPrice: data[i].pPrice,
+                            pUnit: data[i].pUnit,
+                            pimage: data[i].pimage,
+                            productId: data[i].productId
+                        })
+                    }
+                    this.setState({carts: tempcarts})
+                }.bind(this))
+                .catch(function (error) {
+                    console.log(error)
+                }.bind(this))
+        }
+
     }
 
     addToCart = (event) => {
 
         console.log(event.target.value)
-        let uid = UID.replace(/\"/g, "");
-        axios({
-            method: 'post',
-            url: 'http://10.177.7.121:8080/cart/addToCart',
-            data: {
-                'userId': uid,
-                'productId': event.target.value,
-                'purchaseUnit': 1
-            }
-        })
-            .then(function (response) {
-                console.log(response)
-            }.bind(this))
-            .catch(function (error) {
-                console.log(error)
+        console.log(UID)
+        if (UID != null) {
+            let uid = UID.replace(/\"/g, "");
+            axios({
+                method: 'post',
+                url: 'http://10.177.7.121:8080/cart/addToCart',
+                data: {
+                    'userId': uid,
+                    'productId': event.target.value,
+                    'purchaseUnit': 1
+                }
             })
+                .then(function (response) {
+                    console.log(response)
+                    this.setState({cartLimitExceed: false})
+                }.bind(this))
+                .catch(function (error) {
+                    console.log(error)
+                    this.setState({cartLimitExceed: true})
+                }.bind(this))
 
-        this.setState({fullDetails: !this.state.fullDetails})
-        this.setState({showProducts: !this.state.showProducts})
+
+        }
+        else {
+            this.setState({loginFirst: true})
+            this.setState({fullDetails: !this.state.fullDetails})
+            this.setState({showProducts: !this.state.showProducts})
+        }
+
+
     }
 
     removeFromCart = (event) => {
 
-        let pid = event.target.value
+        let pid = event.target.id
         let uid = UID.replace(/\"/g, "");
         axios({
             method: 'post',
             url: 'http://10.177.7.121:8080/cart/remove',
             data: {
                 'userId': uid,
-                'productId': event.target.value,
+                'productId': pid,
                 'purchaseUnit': 1
             }
         })
             .then(function (response) {
                 console.log(response)
-                let tempcarts = this.state.carts.slice()
-                for (var i=0; i<tempcarts.length; i++) {
-                    if (tempcarts[i].productId == pid) {
-                        tempcarts.splice(i, 1)
-                    }
-                }
+                // let tempcarts = this.state.carts.slice()
+                // for (var i=0; i<tempcarts.length; i++) {
+                //     console.log(pid);
+                //     console.log(tempcarts[i].productId);
+                //     if (tempcarts[i].productId == pid) {
+                //         tempcarts.splice(i, 1)
+                //         console.log('deleted element: ' + tempcarts[i])
+                //     }
+                // }
+                axios({
+                    method: 'get',
+                    url: 'http://10.177.7.121:8080/cart/getByUid/' + uid
+                })
+                    .then(function (response) {
+                        console.log(response)
+                        let data = response.data.productDTOList
+                        let tempcarts = this.state.carts.slice();
+                        tempcarts.splice(0, 100)
+                        for (var i=0; i<data.length; i++) {
+                            tempcarts.push({
+                                pBrand: data[i].pBrand,
+                                pCategory: data[i].pCategory,
+                                pName: data[i].pName,
+                                pPrice: data[i].pPrice,
+                                pUnit: data[i].pUnit,
+                                pimage: data[i].pimage,
+                                productId: data[i].productId
+                            })
+                        }
+                        this.setState({carts: tempcarts})
+                    }.bind(this))
+                    .catch(function (error) {
+                        console.log(error)
+                    })
             }.bind(this))
             .catch(function (error) {
                 console.log(error)
             })
 
-        this.setState({fullDetails: !this.state.fullDetails})
-        this.setState({showProducts: !this.state.showProducts})
+    }
+
+    placeOrder = (event) => {
+
+        let uid = UID.replace(/\"/g, "");
+
+        let temporder = this.state.placeOrder.slice()
+        temporder.splice(0, 10)
+
+        for (var i=0; i<this.state.carts.length; i++) {
+            let propname = this.state.carts[i].productId
+            let units = this.state.carts[i].pUnit
+            let price = this.state.carts[i].pPrice
+            temporder.push({productId: propname, units: units, price: price})
+            this.setState({placeOrder: temporder})
+        }
+
+        var productInfos = {
+
+        }
+
+        for (var i=0; i<temporder.length; i++) {
+            productInfos[temporder[i].productId] = {'units': temporder[i].units, 'price': temporder[i].price}
+        }
+        console.log(uid)
+
+        axios({
+            method: 'post',
+            url: 'http://10.177.7.115:8080/order/add',
+            data: {
+                uId: uid,
+                productInfos: productInfos
+            }
+        })
+            .then(function (response) {
+                console.log(response)
+                this.setState({orderPlaced : true})
+            }.bind(this))
+            .catch(function (error) {
+                console.log(error)
+            })
+        //console.log(this.state.placeOrder)
+        // this.setState({
+        //     placeOrder: {uid: 1, productInfos: {'1' : 3, '3': 4, '12': 3}}
+        // })
+
+    }
+
+    logout = () => {
+        localStorage.removeItem('uid');
+        this.setState({isLoggedIn: false})
+        console.log('reaching')
     }
 
     open = (state) => {
@@ -373,6 +488,15 @@ class App extends Component {
         if (this.state.showCartMod) {
             this.setState({showCartMod: false})
         }
+        if (this.state.cartLimitExceed) {
+            this.setState({cartLimitExceed: false})
+        }
+        if (this.state.orderPlaced) {
+            this.setState({orderPlaced: false})
+        }
+        if (this.state.loginFirst) {
+            this.setState({loginFirst: false})
+        }
     }
 
     componentDidMount() {
@@ -381,6 +505,9 @@ class App extends Component {
             this.state.items.splice(0, 1);
         }
         if(this.state.carts[0].pPrice == 0){
+            this.state.carts.splice(0, 1);
+        }
+        if(this.state.placeOrder[0].price == 0){
             this.state.carts.splice(0, 1);
         }
         axios({
@@ -443,15 +570,14 @@ class App extends Component {
     }
 
     render() {
-        const { isLoggedIn, email, password, isSearchOn, showProducts, fullDetails, items, name, carts, indiProduct, alreadyInCart, inCart } = this.state
-        console.log(inCart)
+        const { isLoggedIn, isSearchOn, showProducts, fullDetails, items, name, carts, indiProduct } = this.state
 
         return (
             <div className='App'>
                 <Navbar>
                     <Navbar.Header>
                         <Navbar.Brand>
-                            <a href='#'>InternCart</a>
+                            <a href='localhost:8080'>InternCart</a>
                         </Navbar.Brand>
                     </Navbar.Header>
                     <Navbar.Form pullRight>
@@ -467,7 +593,7 @@ class App extends Component {
                     {isLoggedIn ?
                         <Nav pullRight>
                             <NavItem>
-                                <a href='#'>Logout</a>
+                                <a onClick={this.logout}>Logout</a>
                             </NavItem>
                             <NavItem>
                                 <a href='#' onClick={this.openCart}>Cart</a>
@@ -524,7 +650,7 @@ class App extends Component {
                                     <Col id={row.productId} key={index} xs={12} md={12} lg={3}>
                                         <Thumbnail className='ProdThumb' alt='160x100' src={row.pimage} onClick={this.dataInfo}>
                                             <h3>{row.pName}</h3>
-                                            <p>{row.pPrice}</p>
+                                            <p>Rs. {row.pPrice}</p>
                                         </Thumbnail>
                                     </Col>
                                 ))}
@@ -581,11 +707,15 @@ class App extends Component {
                             <Modal.Body>
                                 <Row>
                                     {carts.map((row, index) => (
-                                        <Col id={row.productId} key={index} xs={12} md={3} lg={3}>
+                                        <Col id={row.productId} key={index} xs={12} md={3} lg={6}>
                                             <Thumbnail className='ProdThumb' onClick={this.dataInfo} alt='160x100' src={row.pimage}>
                                                 <h3>{row.pName}</h3>
-                                                <p>{row.pPrice}</p>
+                                                <p>Price: {row.pPrice}</p>
+                                                <p>Qty: {row.pUnit}</p>
                                             </Thumbnail>
+                                            <p>
+                                                <a className='RemoveButton' id={row.productId} onClick={this.removeFromCart}>Remove from cart</a>
+                                            </p>
                                         </Col>
                                     ))}
                                 </Row>
@@ -595,12 +725,74 @@ class App extends Component {
                                     block
                                     bsSize="large"
                                     type="submit"
+                                    onClick={this.placeOrder}
                                 >
                                     Place Order
                                 </Button>
                             </Modal.Footer>
                         </Modal.Header>
                     </form>
+                </Modal>
+
+                <Modal show={this.state.cartLimitExceed} onHide={this.close}>
+                        <Modal.Header closeButton>
+
+                            <Modal.Title>Error!!!</Modal.Title>
+                            <Modal.Body>
+                                <h3>Your Cart is FULL!!!</h3>
+                                <p>Cart Limit: 4</p>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button
+                                    block
+                                    bsSize="large"
+                                    type="submit"
+                                    onClick={this.close}
+                                >
+                                    OK
+                                </Button>
+                            </Modal.Footer>
+                        </Modal.Header>
+                </Modal>
+
+                <Modal show={this.state.orderPlaced} onHide={this.close}>
+                    <Modal.Header closeButton>
+
+                        <Modal.Title>Congratulations</Modal.Title>
+                        <Modal.Body>
+                            <h3>ORDER PLACED</h3>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button
+                                block
+                                bsSize="large"
+                                type="submit"
+                                onClick={this.close}
+                            >
+                                OK
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Header>
+                </Modal>
+
+                <Modal show={this.state.loginFirst} onHide={this.close}>
+                    <Modal.Header closeButton>
+
+                        <Modal.Title>Error!!!</Modal.Title>
+                        <Modal.Body>
+                            <h3>Login First !!!</h3>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button
+                                block
+                                bsSize="large"
+                                type="submit"
+                                onClick={this.close}
+                            >
+                                OK
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Header>
                 </Modal>
 
                 {fullDetails ?
@@ -614,11 +806,7 @@ class App extends Component {
                             <p>Category: {indiProduct.pCategory}</p>
                             <p>Price: {indiProduct.pPrice}</p>
                             <p>
-                                {alreadyInCart ?
-                                    <Button onClick={this.removeFromCart} value={indiProduct.productId} bsStyle='primary'>Remove from Cart</Button>
-                                    :
-                                    <Button onClick={this.addToCart} value={indiProduct.productId} bsStyle='primary'>Add to Cart</Button>
-                                }
+                                <Button onClick={this.addToCart} value={indiProduct.productId} bsStyle='primary'>Add to Cart</Button>
                             </p>
                             <a onClick={this.toHome}>back</a>
                         </Col>
