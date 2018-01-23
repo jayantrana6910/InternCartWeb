@@ -62,4 +62,17 @@
         top: -20px;
         left: 10px;
     }
+
+    .dropdown-menu {
+        max-height: 120px;
+        overflow: scroll;
+    }
+
+    .Available {
+        float: right;
+    }
+
+    #quantity {
+        width: 10%;
+    }
 }

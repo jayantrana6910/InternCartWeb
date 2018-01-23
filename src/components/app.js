@@ -11,6 +11,8 @@ import Modal from 'react-bootstrap/lib/Modal';
 import FormGroup from 'react-bootstrap/lib/FormGroup';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import FormControl from 'react-bootstrap/lib/FormControl';
+import DropdownButton from 'react-bootstrap/lib/DropdownButton';
+import MenuItem from 'react-bootstrap/lib/MenuItem';
 import Image from 'react-bootstrap/lib/Image';
 import axios from 'axios';
 
@@ -30,9 +32,10 @@ const YASH_PORT = 8080;
 const SADD_IP = '10.177.7.123';
 const SADD_PORT = 8081;
 const AUTH_END = '/authenticate/login';
+const SIGNUP_END = '/user/addorupdate';
 const USER_END = '/user/getOne?uid=';
 import '../style/main.css';
-const UID = localStorage.getItem('uid');
+var UID = localStorage.getItem('uid');
 
 // <p>
 //     {alreadyInCart ?
@@ -51,8 +54,13 @@ class App extends Component {
         fullDetails: false,
         showLoginMod: false,
         showCartMod: false,
+        showRegisterMod: false,
+        addedToCart: false,
         email: '',
         password: '',
+        confirmpassword: '',
+        firstname: '',
+        lastname: '',
         name: '',
         uid: null,
         search: '',
@@ -61,6 +69,8 @@ class App extends Component {
         cartLimitExceed: false,
         orderPlaced: false,
         loginFirst: false,
+        pUnit: [],
+        quantity: 1,
         items: [
             {
                 productId: '',
@@ -84,12 +94,12 @@ class App extends Component {
             }
         ],
         indiProduct: {
-            pBrand: '',
-            pCategory: '',
-            pName: '',
-            pPrice: 0,
-            pUnit: 0,
-            pimage: '',
+            productBrand: '',
+            productCategory: '',
+            productName: '',
+            productPrice: 0,
+            productUnit: 0,
+            productImage: '',
             productId: ''
         },
         inCart: [
@@ -110,6 +120,18 @@ class App extends Component {
 
     validateForm() {
         return this.state.email.length > 0 && this.state.password.length > 0;
+    }
+
+    validateRegisterForm() {
+        let pwd = this.state.password
+        let cpwd = this.state.confirmpassword
+        // console.log(this.state.firstname.length)
+        // console.log(this.state.lastname.length)
+        // console.log(this.state.email.length)
+        // console.log(pwd.length)
+        // console.log(cpwd)
+
+        return this.state.email.length > 0 && this.state.password.length > 0 && this.state.firstname.length > 0 && this.state.lastname.length > 0 && this.state.password == this.state.confirmpassword;
     }
 
     handleChange = (event) => {
@@ -133,12 +155,12 @@ class App extends Component {
                 for (var i=0; i<data.length; i++) {
                     tempitems.push({
                         productId: data[i].productId,
-                        pName: data[i].pName,
-                        pPrice: data[i].pPrice,
-                        pBrand: data[i].pBrand,
-                        pCategory: data[i].pCategory,
-                        pimage: data[i].pimage,
-                        pUnit: data[i].pUnit
+                        pName: data[i].productName,
+                        pPrice: data[i].productPrice,
+                        pBrand: data[i].productBrand,
+                        pCategory: data[i].productCategory,
+                        pimage: data[i].productImage,
+                        pUnit: data[i].productUnit
                     })
                 }
                 this.setState({items: tempitems})
@@ -161,6 +183,12 @@ class App extends Component {
         this.setState({fullDetails: !this.state.fullDetails})
         this.setState({showProducts: !this.state.showProducts})
         this.setState({alreadyInCart: false})
+    }
+
+    changeQty = (event) => {
+
+        console.log(event)
+        this.setState({quantity: event})
     }
 
     dataInfo = (event) => {
@@ -187,12 +215,12 @@ class App extends Component {
                     tempcarts.splice(0, 100)
                     for (var i=0; i<data.length; i++) {
                         tempcarts.push({
-                            pBrand: data[i].pBrand,
-                            pCategory: data[i].pCategory,
-                            pName: data[i].pName,
-                            pPrice: data[i].pPrice,
-                            pUnit: data[i].pUnit,
-                            pimage: data[i].pimage,
+                            pBrand: data[i].productBrand,
+                            pCategory: data[i].productCategory,
+                            pName: data[i].productName,
+                            pPrice: data[i].productPrice,
+                            pUnit: data[i].productUnit,
+                            pimage: data[i].productImage,
                             productId: data[i].productId
                         })
                     }
@@ -229,7 +257,7 @@ class App extends Component {
 
         axios({
             method: 'get',
-            url: 'http://10.177.7.117:8080/search/getOne/' + finalpid
+            url: 'http://10.177.7.115:8081/catalogue/' + finalpid
         })
             .then(function (response) {
                 console.log(response)
@@ -238,9 +266,56 @@ class App extends Component {
                 this.setState({
                     indiProduct: data
                 })
+                let punit = this.state.indiProduct.productUnit
+                for (var i=0; i<punit; i++) {
+                    let tempunit = this.state.pUnit.slice()
+                    tempunit.push(i+1)
+                    this.setState({pUnit: tempunit})
+                }
+                console.log(this.state.pUnit)
             }.bind(this))
             .catch(function (error) {
                 console.log(error)
+            })
+    }
+
+    handleRegisterSubmit = (event) => {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: 'http://' + SADD_IP + ':' + SADD_PORT + SIGNUP_END,
+            data: {
+                'userName': this.state.email,
+                'password': this.state.password,
+                'firstName': this.state.firstname,
+                'lastName': this.state.lastname
+            }
+        })
+            .then(function (response) {
+                this.setState({isLoggedIn: true})
+                this.close()
+                console.log(response)
+                localStorage.setItem('uid', JSON.stringify(response.data.uid));
+                UID = localStorage.getItem('uid')
+                let uid = UID.replace(/\"/g, "");
+                axios({
+                    method: 'get',
+                    url: 'http://' + SADD_IP + ':' + SADD_PORT + USER_END + uid,
+
+                })
+                    .then(function (response) {
+
+                        let fname = response.data.firstName
+                        let lname = response.data.lastName
+                        this.setState({name: fname + ' ' + lname})
+                        console.log(this.state.name)
+                    }.bind(this))
+                    .catch(function (error) {
+                        console.log(error)
+                    })
+            }.bind(this))
+            .catch(function (error) {
+                console.log(error);
             })
     }
 
@@ -270,6 +345,23 @@ class App extends Component {
                     this.close()
                     console.log(response)
                     localStorage.setItem('uid', JSON.stringify(response.data.uid));
+                    UID = localStorage.getItem('uid')
+                    let uid = UID.replace(/\"/g, "");
+                    axios({
+                        method: 'get',
+                        url: 'http://' + SADD_IP + ':' + SADD_PORT + USER_END + uid,
+
+                    })
+                        .then(function (response) {
+
+                            let fname = response.data.firstName
+                            let lname = response.data.lastName
+                            this.setState({name: fname + ' ' + lname})
+                            console.log(this.state.name)
+                        }.bind(this))
+                        .catch(function (error) {
+                            console.log(error)
+                        })
                 }.bind(this))
                 .catch(function (error) {
                     console.log(error);
@@ -316,12 +408,12 @@ class App extends Component {
                     tempcarts.splice(0, 100)
                     for (var i=0; i<data.length; i++) {
                         tempcarts.push({
-                            pBrand: data[i].pBrand,
-                            pCategory: data[i].pCategory,
-                            pName: data[i].pName,
-                            pPrice: data[i].pPrice,
-                            pUnit: data[i].pUnit,
-                            pimage: data[i].pimage,
+                            pBrand: data[i].productBrand,
+                            pCategory: data[i].productCategory,
+                            pName: data[i].productName,
+                            pPrice: data[i].productPrice,
+                            pUnit: data[i].productUnit,
+                            pimage: data[i].productImage,
                             productId: data[i].productId
                         })
                     }
@@ -346,16 +438,21 @@ class App extends Component {
                 data: {
                     'userId': uid,
                     'productId': event.target.value,
-                    'purchaseUnit': 1
+                    'purchaseUnit': this.state.quantity
                 }
             })
                 .then(function (response) {
                     console.log(response)
                     this.setState({cartLimitExceed: false})
+                    this.setState({addedToCart: true})
+                    this.setState({showProducts: true})
+                    this.setState({fullDetails: false})
                 }.bind(this))
                 .catch(function (error) {
                     console.log(error)
                     this.setState({cartLimitExceed: true})
+                    this.setState({showProducts: true})
+                    this.setState({fullDetails: false})
                 }.bind(this))
 
 
@@ -404,12 +501,12 @@ class App extends Component {
                         tempcarts.splice(0, 100)
                         for (var i=0; i<data.length; i++) {
                             tempcarts.push({
-                                pBrand: data[i].pBrand,
-                                pCategory: data[i].pCategory,
-                                pName: data[i].pName,
-                                pPrice: data[i].pPrice,
-                                pUnit: data[i].pUnit,
-                                pimage: data[i].pimage,
+                                pBrand: data[i].productBrand,
+                                pCategory: data[i].productCategory,
+                                pName: data[i].productName,
+                                pPrice: data[i].productPrice,
+                                pUnit: data[i].productUnit,
+                                pimage: data[i].productImage,
                                 productId: data[i].productId
                             })
                         }
@@ -475,9 +572,15 @@ class App extends Component {
         localStorage.removeItem('uid');
         this.setState({isLoggedIn: false})
         console.log('reaching')
+        UID = null
     }
 
     open = (state) => {
+        if (this.state.showLoginMod == true) {
+            this.setState({showLoginMod: false})
+        } else if (this.state.showRegisterMod == true) {
+            this.setState({showRegisterMod: false})
+        }
         this.setState({[state]: true})
     }
 
@@ -497,6 +600,12 @@ class App extends Component {
         if (this.state.loginFirst) {
             this.setState({loginFirst: false})
         }
+        if (this.state.showRegisterMod) {
+            this.setState({showRegisterMod: false})
+        }
+        if (this.state.addedToCart) {
+            this.setState({addedToCart: false})
+        }
     }
 
     componentDidMount() {
@@ -512,22 +621,22 @@ class App extends Component {
         }
         axios({
             method: 'get',
-            url: 'http://10.177.7.117:8080/search/latest'
+            url: 'http://10.177.7.115:8081/catalogue/latest'
         })
             .then(function (response) {
                 let data = response.data
-
+                console.log(response)
                 console.log(data[0].productId)
                 let tempitems = this.state.items.slice()
                 for (var i=0; i<data.length; i++) {
                     tempitems.push({
                         productId: data[i].productId,
-                        pName: data[i].pName,
-                        pPrice: data[i].pPrice,
-                        pBrand: data[i].pBrand,
-                        pCategory: data[i].pCategory,
-                        pimage: data[i].pimage,
-                        pUnit: data[i].pUnit
+                        pName: data[i].productName,
+                        pPrice: data[i].productPrice,
+                        pBrand: data[i].productBrand,
+                        pCategory: data[i].productCategory,
+                        pimage: data[i].productImage,
+                        pUnit: data[i].productUnit
                     })
                 }
 
@@ -558,6 +667,7 @@ class App extends Component {
             })*/
                 .then(function (response) {
 
+                    console.log(response)
                     let fname = response.data.firstName
                     let lname = response.data.lastName
                     this.setState({name: fname + ' ' + lname})
@@ -570,7 +680,7 @@ class App extends Component {
     }
 
     render() {
-        const { isLoggedIn, isSearchOn, showProducts, fullDetails, items, name, carts, indiProduct } = this.state
+        const { isLoggedIn, isSearchOn, showProducts, fullDetails, items, name, carts, indiProduct, pUnit } = this.state
 
         return (
             <div className='App'>
@@ -618,26 +728,13 @@ class App extends Component {
                                     <span className='SubText'>We give you happiness</span>
                                 </Col>
                             </Carousel.Item>
-                            <Carousel.Item>
-                                <Col xs={12} lg={12} md={12} className='CenterMain'>
-                                    <Image className='CarouselImage' responsive src='../img/mobile1.jpg'/>
-                                </Col>
-                            </Carousel.Item>
-                            <Carousel.Item>
-                                <Col xs={12} lg={12} md={12} className='CenterMain'>
-                                    <Image className='CarouselImage' responsive src='../img/mobile2.jpg'/>
-                                </Col>
-                            </Carousel.Item>
-                            <Carousel.Item>
-                                <Col xs={12} lg={12} md={12} className='CenterMain'>
-                                    <Image className='CarouselImage' responsive src='../img/shoe1.jpg'/>
-                                </Col>
-                            </Carousel.Item>
-                            <Carousel.Item>
-                                <Col xs={12} lg={12} md={12} className='CenterMain'>
-                                    <Image className='CarouselImage' responsive src='../img/shoe2.jpg'/>
-                                </Col>
-                            </Carousel.Item>
+                            {items.map((row, index) => (
+                                <Carousel.Item>
+                                    <Col xs={12} lg={12} md={12} className='CenterMain'>
+                                        <Image className='CarouselImage' responsive src={row.pimage}/>
+                                    </Col>
+                                </Carousel.Item>
+                            ))}
                         </Carousel>
                     </Row>
                 }
@@ -650,7 +747,7 @@ class App extends Component {
                                     <Col id={row.productId} key={index} xs={12} md={12} lg={3}>
                                         <Thumbnail className='ProdThumb' alt='160x100' src={row.pimage} onClick={this.dataInfo}>
                                             <h3>{row.pName}</h3>
-                                            <p>Rs. {row.pPrice}</p>
+                                            <p>Rs. {row.pPrice}<span className='Available'>Available: {row.pUnit}</span></p>
                                         </Thumbnail>
                                     </Col>
                                 ))}
@@ -694,8 +791,78 @@ class App extends Component {
                                 >
                                     Login
                                 </Button>
+                                <p>
+                                    <a onClick={(event) => this.open('showRegisterMod')}>Sign Up</a>
+                                </p>
                             </Modal.Footer>
                     </Modal.Header>
+                    </form>
+                </Modal>
+
+                <Modal show={this.state.showRegisterMod} onHide={this.close}>
+                    <form onSubmit={this.handleRegisterSubmit}>
+                        <Modal.Header closeButton>
+
+                            <Modal.Title>Register</Modal.Title>
+                            <Modal.Body>
+                                <FormGroup controlId="firstname" bsSize="large">
+                                    <ControlLabel>First Name</ControlLabel>
+                                    <FormControl
+                                        autoFocus
+                                        type="text"
+                                        value={this.state.firstname}
+                                        onChange={this.handleChange}
+                                    />
+                                </FormGroup>
+                                <FormGroup controlId="lastname" bsSize="large">
+                                    <ControlLabel>Last Name</ControlLabel>
+                                    <FormControl
+                                        autoFocus
+                                        type="text"
+                                        value={this.state.lastname}
+                                        onChange={this.handleChange}
+                                    />
+                                </FormGroup>
+                                <FormGroup controlId="email" bsSize="large">
+                                    <ControlLabel>Email</ControlLabel>
+                                    <FormControl
+                                        autoFocus
+                                        type="email"
+                                        value={this.state.email}
+                                        onChange={this.handleChange}
+                                    />
+                                </FormGroup>
+                                <FormGroup controlId="password" bsSize="large">
+                                    <ControlLabel>Password</ControlLabel>
+                                    <FormControl
+                                        value={this.state.password}
+                                        onChange={this.handleChange}
+                                        type="password"
+                                    />
+                                </FormGroup>
+                                <FormGroup controlId="confirmpassword" bsSize="large">
+                                    <ControlLabel>Confirm Password</ControlLabel>
+                                    <FormControl
+                                        value={this.state.confirmpassword}
+                                        onChange={this.handleChange}
+                                        type="password"
+                                    />
+                                </FormGroup>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button
+                                    block
+                                    bsSize="large"
+                                    disabled={!this.validateRegisterForm()}
+                                    type="submit"
+                                >
+                                    register
+                                </Button>
+                                <p>
+                                    <a onClick={(event) => this.open('showLoginMod')}>Sign In</a>
+                                </p>
+                            </Modal.Footer>
+                        </Modal.Header>
                     </form>
                 </Modal>
 
@@ -714,7 +881,15 @@ class App extends Component {
                                                 <p>Qty: {row.pUnit}</p>
                                             </Thumbnail>
                                             <p>
-                                                <a className='RemoveButton' id={row.productId} onClick={this.removeFromCart}>Remove from cart</a>
+                                                <Button
+                                                    block
+                                                    bsStyle='warning'
+                                                    bsSize='small'
+                                                    onClick={this.removeFromCart}
+                                                    id={row.productId}
+                                                >
+                                                    Remove from cart
+                                                </Button>
                                             </p>
                                         </Col>
                                     ))}
@@ -795,16 +970,59 @@ class App extends Component {
                     </Modal.Header>
                 </Modal>
 
+                <Modal show={this.state.addedToCart} onHide={this.close}>
+                    <Modal.Header closeButton>
+
+                        <Modal.Title>Item added to Cart</Modal.Title>
+                        <Modal.Body>
+                            <h4>{this.state.quantity} units of {indiProduct.productName} added to the cart</h4>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button
+                                block
+                                bsSize="large"
+                                type="submit"
+                                onClick={this.close}
+                            >
+                                OK
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Header>
+                </Modal>
+
                 {fullDetails ?
                     <Row>
                         <Col xs={12} md={12} lg={4}>
-                            <Image responsive className='AllDetail' src={indiProduct.pimage} />
+                            <Image responsive className='AllDetail' src={indiProduct.productImage} />
                         </Col>
                         <Col xs={12} md={12} lg={8}>
-                            <h3>Item Name: {indiProduct.pName}</h3>
-                            <p>Brand: {indiProduct.pBrand}</p>
-                            <p>Category: {indiProduct.pCategory}</p>
-                            <p>Price: {indiProduct.pPrice}</p>
+                            <h3>Item Name: {indiProduct.productName}</h3>
+                            <p>Brand: {indiProduct.productBrand}</p>
+                            <p>Category: {indiProduct.productCategory}</p>
+                            <p>Available: {indiProduct.productUnit}</p>
+                            <p>Price: {indiProduct.productPrice}</p>
+                            <p>
+                                <FormGroup controlId="quantity" bsSize="large">
+                                    <ControlLabel>Quantity</ControlLabel>
+                                    <FormControl
+                                        autoFocus
+                                        type="number"
+                                        min='1'
+                                        max='3'
+                                    />
+                                </FormGroup>
+                                {/*<DropdownButton*/}
+                                    {/*bsStyle='info'*/}
+                                    {/*id='qtydrp'*/}
+                                    {/*title={this.state.quantity}*/}
+                                    {/*onSelect={this.changeQty}*/}
+                                    {/*value={this.state.quantity}*/}
+                                {/*>*/}
+                                    {/*{pUnit.map((row, index) => (*/}
+                                        {/*<MenuItem eventKey={row}>{row}</MenuItem>*/}
+                                    {/*))}*/}
+                                {/*</DropdownButton>&nbsp; Units*/}
+                            </p>
                             <p>
                                 <Button onClick={this.addToCart} value={indiProduct.productId} bsStyle='primary'>Add to Cart</Button>
                             </p>
